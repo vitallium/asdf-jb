@@ -11,6 +11,20 @@ readonly TMP_DOWNLOAD_DIR="$(mktemp -d)"
 trap 'rm -rf "${TMP_DOWNLOAD_DIR?}"' EXIT
 
 #
+_get_arch() {
+  local arch; arch=$(uname -m)
+  case $arch in
+    armv*) arch="arm";;
+    aarch64 | arm64) arch="arm64";;
+    x86_64) arch="amd64";;
+  esac
+  echo "$arch"
+}
+
+_get_platform() {
+	uname | tr '[:upper:]' '[:lower:]'
+}
+
 error_exit() {
   echo "$1" >&2
   exit "${2:-1}"
@@ -21,8 +35,9 @@ install() {
   local -r install_version="$2"
   local -r install_path="$3"
   local -r install_path_bin="${install_path}/bin"
-  local -r platform="$(uname | tr '[:upper:]' '[:lower:]')-amd64"
-  local -r download_url="${DOWNLOAD_BASE_URL}/v${install_version}/${BINARY_NAME}-${platform}"
+  local -r platform="$(_get_platform)"
+  local -r arch="$(_get_arch)"
+  local -r download_url="${DOWNLOAD_BASE_URL}/v${install_version}/${BINARY_NAME}-${platform}-${arch}"
   local -r download_path="${TMP_DOWNLOAD_DIR}/${BINARY_NAME}"
 
   [ "$install_type" != "version" ] && error_exit "Error: source installs are not supported"
